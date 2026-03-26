@@ -26,7 +26,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "AppProcess"
+rootProject.name = "Friston-3"
 
 include(":app")
 include(":hiddenapi")

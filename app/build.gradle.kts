@@ -14,11 +14,11 @@ val cfgSourceCompatibility: JavaVersion by rootProject.extra
 val cfgTargetCompatibility: JavaVersion by rootProject.extra
 
 configure<ApplicationExtension> {
-    namespace = "xyz.mufanc.ash"
+    namespace = "friston.prts"
     compileSdk = cfgCompileSdkVersion
 
     defaultConfig {
-        applicationId = "xyz.mufanc.ash"
+        applicationId = "friston.prts"
         minSdk = cfgMinSdkVersion
         targetSdk = cfgTargetSdkVersion
         versionCode = 1

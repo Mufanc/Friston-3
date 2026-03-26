@@ -1,4 +1,4 @@
-package xyz.mufanc.ash
+package friston.prts
 
 import xyz.mufanc.aproc.annotation.AProcEntry
 
