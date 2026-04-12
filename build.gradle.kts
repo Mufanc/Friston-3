@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.agp.lib) apply false
 }
 
-val cfgMinSdkVersion by extra(30)
+val cfgMinSdkVersion by extra(31)
 val cfgTargetSdkVersion by extra(36)
 val cfgCompileSdkVersion by extra(36)
 val cfgSourceCompatibility by extra(JavaVersion.VERSION_17)

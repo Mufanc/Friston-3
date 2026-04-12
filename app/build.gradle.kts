@@ -39,6 +39,8 @@ configure<ApplicationExtension> {
 }
 
 dependencies {
+    compileOnly(project(":hiddenapi"))
     implementation(libs.core.ktx)
+    implementation(libs.kotlinx.coroutines.android)
     implementation(libs.hiddenapi.runtime)
 }
