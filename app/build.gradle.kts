@@ -43,4 +43,5 @@ dependencies {
     implementation(libs.core.ktx)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.hiddenapi.runtime)
+    implementation(libs.eventbus)
 }

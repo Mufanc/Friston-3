@@ -5,13 +5,10 @@ import android.os.Handler
 import android.os.Looper
 import android.system.Os
 import friston.prts.Configs
-import friston.prts.recorder.VoipRecorder
+import friston.prts.monitor.AudioModeChangeMonitor
+import friston.prts.monitor.AudioRecordingStatusMonitor
+import friston.prts.recorder.RecordingController
 import friston.prts.util.Logger
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
-import java.io.File
 
 object FakeApp {
 
@@ -24,7 +21,7 @@ object FakeApp {
         }
 
         Thread.setDefaultUncaughtExceptionHandler { th, err ->
-            Logger.e(TAG, "uncaught exception in thread: $th", err)
+            Logger.e(TAG, "Uncaught exception in thread: $th", err)
         }
     }
 
@@ -40,6 +37,8 @@ object FakeApp {
 
     private val mContext = FakeContext(mActivityThread.systemContext)
 
+    fun context() = mContext
+
     fun main(args: Array<String>) {
         Logger.d(TAG, "main")
         prepare()
@@ -50,17 +49,12 @@ object FakeApp {
     fun appMain(args: Array<String>) {
         Logger.d(TAG, "app main")
 
-        val recorder = VoipRecorder(mContext)
-        val outputFile = File("/data/misc/perfetto-traces/output.aac")
+        val controller = RecordingController(mContext)
+        controller.init()
 
-        Logger.d(TAG, "output file: ${outputFile.absolutePath}")
+        AudioRecordingStatusMonitor(mContext).init()
+        AudioModeChangeMonitor(mContext).init()
 
-        CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
-            try {
-                recorder.start(outputFile)
-            } catch (e: Exception) {
-                Logger.e(TAG, "recorder error", e)
-            }
-        }
+        Logger.i(TAG, "Monitors and recording controller initialized")
     }
 }
