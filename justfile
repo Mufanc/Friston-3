@@ -4,7 +4,7 @@ run variant="release": stop (build variant)
     adb shell su -c /data/local/tmp/friston3.sh
 
 stop:
-    adb shell su -c killall app_process || true
+    adb shell su -c killall Friston-3 || true
 
 play: stop
     adb pull /data/misc/perfetto-traces/output.aac .
