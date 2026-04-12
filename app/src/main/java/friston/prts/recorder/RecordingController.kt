@@ -10,6 +10,7 @@ import friston.prts.monitor.MonitorEvent
 import friston.prts.util.EventReceiver
 import friston.prts.util.Logger
 import friston.prts.util.Ref
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -87,6 +88,8 @@ class RecordingController(private val mContext: Context) : EventReceiver<Monitor
         mRecordingJob = mScope.launch {
             try {
                 recorder.start(OUTPUT_FILE)
+            } catch (_: CancellationException) {
+                Logger.d(TAG, "Recording stopped")
             } catch (e: Exception) {
                 Logger.e(TAG, "Recorder error", e)
             }
