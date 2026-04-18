@@ -7,12 +7,16 @@ stop:
     adb shell su -c killall Friston-3 || true
 
 play: stop
-    adb pull /data/misc/perfetto-traces/output.aac .
-    ffplay output.aac
+    #!/usr/bin/env bash
+    FILE=$(adb shell ls -t /data/local/tmp/Friston-3/*.aac | head -1 | tr -d '\r')
+    [ -z "$FILE" ] && echo "No recording found" && exit 1
+    adb pull "$FILE" .
+    ffplay "$(basename "$FILE")"
 
 build variant="release":
     ./gradlew :app:assemble{{ capitalize(variant) }}
 
 clean: stop
     ./gradlew clean
-    adb shell rm -f /data/misc/perfetto-traces/output.aac
+    adb shell rm -rf /data/local/tmp/Friston-3/
+    rm -f *.aac

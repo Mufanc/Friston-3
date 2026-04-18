@@ -26,7 +26,6 @@ class RecordingController(private val mContext: Context) : EventReceiver<Monitor
 
     companion object {
         private const val TAG = "RecordingController"
-        private val OUTPUT_FILE = File("/data/misc/perfetto-traces/output.aac")
     }
 
     private val mScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -60,7 +59,7 @@ class RecordingController(private val mContext: Context) : EventReceiver<Monitor
                 mIsRecording = recording
 
                 if (recording) {
-                    start()
+                    start(configs)
                 } else {
                     stop()
                 }
@@ -79,15 +78,19 @@ class RecordingController(private val mContext: Context) : EventReceiver<Monitor
         }
     }
 
-    private fun start() {
-        Logger.i(TAG, "VoIP call detected, starting recording")
+    private fun start(configs: List<AudioRecordingConfiguration>?) {
+        val config = configs?.firstOrNull() ?: return
+        val packageName = RecordingPathUtil.getPackageNameFromConfig(config) ?: "unknown"
+        val outputFile = RecordingPathUtil.generatePath(RecordingType.VOIP, packageName)
+
+        Logger.i(TAG, "VoIP call detected, starting recording to ${outputFile.absolutePath}")
 
         val recorder = VoipRecorder(mContext)
         mRecorder = recorder
 
         mRecordingJob = mScope.launch {
             try {
-                recorder.start(OUTPUT_FILE)
+                recorder.start(outputFile)
             } catch (_: CancellationException) {
                 Logger.d(TAG, "Recording stopped")
             } catch (e: Exception) {

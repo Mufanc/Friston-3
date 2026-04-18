@@ -16,4 +16,8 @@ public class AudioRecordingConfigurationHidden {
     public int getClientUid() {
         throw new RuntimeException("Stub!");
     }
+
+    public String getClientPackageName() {
+        throw new RuntimeException("Stub!");
+    }
 }
