@@ -8,6 +8,7 @@ import friston.prts.Configs
 import friston.prts.monitor.AudioModeChangeMonitor
 import friston.prts.monitor.AudioRecordingStatusMonitor
 import friston.prts.recorder.RecordingController
+import friston.prts.recorder.RecordingPathUtil
 import friston.prts.util.Logger
 
 object FakeApp {
@@ -48,6 +49,8 @@ object FakeApp {
 
     fun appMain(args: Array<String>) {
         Logger.d(TAG, "app main")
+
+        RecordingPathUtil.ensureOutputDir()
 
         val controller = RecordingController(mContext)
         controller.init()

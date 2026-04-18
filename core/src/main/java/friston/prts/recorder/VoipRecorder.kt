@@ -180,6 +180,7 @@ class VoipRecorder(private val mContext: Context) {
         initCodec()
 
         mOutputStream = FileOutputStream(outputFile)
+        RecordingPathUtil.setFilePermissions(outputFile)
 
         val downRecord = mDownlinkRecord ?: error("Downlink AudioRecord not initialized")
         val upRecord = mUplinkRecord ?: error("Uplink AudioRecord not initialized")

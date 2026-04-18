@@ -3,6 +3,8 @@ package friston.prts.recorder
 import android.media.AudioRecordingConfiguration
 import android.media.AudioRecordingConfigurationHidden
 import dev.rikka.tools.refine.Refine
+import android.system.Os
+import android.system.OsConstants
 import friston.prts.util.Logger
 import java.io.File
 import java.time.LocalDateTime
@@ -47,6 +49,11 @@ object RecordingPathUtil {
             Logger.i(TAG, "Created output directory: $OUTPUT_DIR")
         }
 
+        Os.chmod(dir.absolutePath, OsConstants.S_IRWXU)
         return dir
+    }
+
+    fun setFilePermissions(file: File) {
+        Os.chmod(file.absolutePath, OsConstants.S_IRUSR or OsConstants.S_IWUSR)
     }
 }
