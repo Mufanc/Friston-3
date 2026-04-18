@@ -42,7 +42,7 @@ Friston-3/
   core/               # Kotlin - recording logic, monitors, utilities
   hiddenapi/          # Java stubs for Android hidden APIs
   audioserver-patch/  # Rust - runtime audioserver patching
-  magisk/             # Magisk module scripts and metadata
+  module/             # Magisk module scripts and metadata
   justfile            # Build orchestration
 ```
 

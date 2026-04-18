@@ -18,9 +18,9 @@ build-rust variant="release":
 package variant="release": (build variant)
     #!/usr/bin/env bash
     set -euo pipefail
-    STAGING="build/magisk-staging"
+    STAGING="build/module-staging"
     rm -rf "$STAGING" build/friston3-module.zip
-    cp -r magisk "$STAGING"
+    cp -r module "$STAGING"
     mkdir -p "$STAGING/bin"
     cp audioserver-patch/target/{{ TARGET }}/{{ variant }}/audioserver-patch "$STAGING/bin/"
     cp core/build/outputs/apk/{{ variant }}/core-{{ variant }}*.ash "$STAGING/bin/friston3.sh"
@@ -30,4 +30,4 @@ package variant="release": (build variant)
 clean:
     ./gradlew clean
     cargo clean --manifest-path audioserver-patch/Cargo.toml
-    rm -rf build/magisk-staging build/friston3-module.zip
+    rm -rf build/module-staging build/friston3-module.zip
