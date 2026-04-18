@@ -28,5 +28,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "Friston-3"
 
-include(":app")
+include(":core")
 include(":hiddenapi")
