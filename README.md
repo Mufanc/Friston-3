@@ -1,13 +1,13 @@
 # Friston-3
 
-A Magisk module that enables automatic VoIP call recording on Android, by leveraging hidden AudioPolicy APIs and runtime audioserver patching.
+A Magisk module that enables automatic VoIP and cellular call recording on Android, by leveraging hidden audio APIs and runtime audioserver patching.
 
 ## How It Works
 
 Friston-3 consists of two main components:
 
 - **audioserver-patch** (Rust) -- Runs at boot to patch the `audioserver` process, bypassing recording restrictions that would otherwise block third-party audio capture.
-- **friston3.sh** (Kotlin, packaged as an executable) -- A headless process that monitors audio mode changes and active recording sessions. When a VoIP call is detected (e.g. WeChat, Telegram), it automatically captures both uplink and downlink audio, mixes them, and encodes the result to AAC.
+- **friston3.sh** (Kotlin, packaged as an executable) -- A headless process that monitors VoIP audio sessions and cellular call state, then records calls automatically and encodes them to AAC.
 
 ### VoIP Recording Flow
 
@@ -18,6 +18,13 @@ Friston-3 consists of two main components:
    - Opens an `AudioRecord` with `VOICE_COMMUNICATION` source for the local microphone (uplink).
    - Mixes both streams and encodes to AAC (16kHz, mono, 64kbps) with ADTS framing.
 4. Recordings are saved to `/data/local/tmp/Friston-3/` as `voip-<package>-<timestamp>.aac`.
+
+### Cellular Recording Flow
+
+1. `TelephonyCallStateMonitor` watches each active subscription for call state changes.
+2. When a call becomes active, `RecordingController` starts a `CallRecorder` using the `VOICE_CALL` audio source.
+3. Audio is encoded to AAC (16kHz, mono, 64kbps) with ADTS framing.
+4. After the call ends, a unique matching CallLog entry is used to name the recording; otherwise the number remains `unknown`.
 
 ## Requirements
 
@@ -54,14 +61,16 @@ Friston-3/
 
 ## Usage
 
-Once installed, everything is automatic -- no user interaction required. When a VoIP call begins, recording starts; when the call ends, recording stops. Output files are located at:
+Once installed, everything is automatic -- no user interaction required. VoIP and cellular calls are recorded when they become active and stopped when they end. Output files are located at:
 
 ```
 /data/local/tmp/Friston-3/voip-<package>-<YYMMDDHHmm>.aac
+/data/local/tmp/Friston-3/call-<number-or-unknown>-<YYMMDDHHmm>.aac
 ```
 
 ## Roadmap
 
 - [x] VoIP call recording (WeChat, Telegram, etc.)
-- [ ] Cellular call recording
+- [x] Cellular call recording
 - [ ] Microphone recording support
+- [ ] Automatic cloud backup
