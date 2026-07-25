@@ -7,9 +7,6 @@ import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioManagerHidden
 import android.media.AudioRecord
-import android.media.MediaCodec
-import android.media.MediaCodecInfo
-import android.media.MediaFormat
 import android.media.MediaRecorder
 import android.media.audiopolicy.AudioMix
 import android.media.audiopolicy.AudioMixingRule
@@ -31,15 +28,11 @@ class VoipRecorder(private val mContext: Context) {
         private const val TAG = "VoipRecorder"
         private const val SAMPLE_RATE = 16000
         private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
+        private const val CHANNEL_COUNT = 1
         private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
         private const val FRAME_SAMPLES = 640  // 40ms @ 16kHz
         private const val FRAME_BYTES = FRAME_SAMPLES * 2  // 16bit = 2 bytes/sample
         private const val BIT_RATE = 64000
-
-        // ADTS constants for AAC-LC, 16kHz, mono
-        private const val ADTS_PROFILE = 2        // AAC-LC
-        private const val ADTS_FREQ_INDEX = 8      // 16kHz
-        private const val ADTS_CHANNEL_CONFIG = 1  // mono
     }
 
     private val mAudioManager = mContext.getSystemService(AudioManager::class.java)
@@ -47,9 +40,8 @@ class VoipRecorder(private val mContext: Context) {
     private var mAudioPolicy: AudioPolicy? = null
     private var mDownlinkRecord: AudioRecord? = null
     private var mUplinkRecord: AudioRecord? = null
-    private var mCodec: MediaCodec? = null
+    private var mEncoder: AacAdtsEncoder? = null
     private var mOutputStream: FileOutputStream? = null
-    private var mPresentationTimeUs = 0L
     private val mMixedBuffer = ByteBuffer.allocate(FRAME_BYTES).order(ByteOrder.LITTLE_ENDIAN)
 
     private fun initDownlink() {
@@ -95,17 +87,6 @@ class VoipRecorder(private val mContext: Context) {
         )
     }
 
-    private fun initCodec() {
-        val format = MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AAC, SAMPLE_RATE, 1)
-        format.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
-        format.setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE)
-
-        mCodec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC).apply {
-            configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-            start()
-        }
-    }
-
     private fun mixFrames(downBuf: ByteArray, downLen: Int, upBuf: ByteArray, upLen: Int): Int {
         val samples = minOf(downLen, upLen) / 2
         val downShorts = ByteBuffer.wrap(downBuf, 0, downLen).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer()
@@ -119,65 +100,22 @@ class VoipRecorder(private val mContext: Context) {
         return samples * 2
     }
 
-    /**
-     * Build 7-byte ADTS header for AAC-LC, 16kHz, Mono
-     */
-    private fun encodeAdtsHeader(aacFrameLength: Int): ByteArray {
-        val frameLen = aacFrameLength + 7
-        val header = ByteArray(7)
-
-        header[0] = 0xFF.toByte()
-        header[1] = 0xF9.toByte()  // MPEG-4, Layer 0, no CRC
-        header[2] = (((ADTS_PROFILE - 1) shl 6) or (ADTS_FREQ_INDEX shl 2) or (ADTS_CHANNEL_CONFIG shr 2)).toByte()
-        header[3] = (((ADTS_CHANNEL_CONFIG and 0x3) shl 6) or (frameLen shr 11)).toByte()
-        header[4] = ((frameLen shr 3) and 0xFF).toByte()
-        header[5] = (((frameLen and 0x7) shl 5) or 0x1F).toByte()
-        header[6] = 0xFC.toByte()
-
-        return header
-    }
-
-    private fun drainEncoder() {
-        val encoder = mCodec ?: return
-        val stream = mOutputStream ?: return
-        val bufferInfo = MediaCodec.BufferInfo()
-
-        while (true) {
-            val index = encoder.dequeueOutputBuffer(bufferInfo, 0)
-            if (index < 0) break
-
-            val buffer = encoder.getOutputBuffer(index)
-            if (buffer != null && bufferInfo.size > 0) {
-                val data = ByteArray(bufferInfo.size)
-                buffer.position(bufferInfo.offset)
-                buffer.get(data)
-                stream.write(encodeAdtsHeader(data.size))
-                stream.write(data)
-            }
-
-            encoder.releaseOutputBuffer(index, false)
-        }
+    private fun initEncoder() {
+        val encoder = AacAdtsEncoder(SAMPLE_RATE, CHANNEL_COUNT, BIT_RATE)
+        mEncoder = encoder
+        encoder.start()
     }
 
     private fun encodeFrame(size: Int) {
-        val encoder = mCodec ?: return
-        val index = encoder.dequeueInputBuffer(10_000)
-
-        if (index >= 0) {
-            val buffer = encoder.getInputBuffer(index) ?: return
-            buffer.clear()
-            buffer.put(mMixedBuffer.array(), 0, size)
-            encoder.queueInputBuffer(index, 0, size, mPresentationTimeUs, 0)
-            mPresentationTimeUs += size.toLong() / 2 * 1_000_000L / SAMPLE_RATE
-        }
-
-        drainEncoder()
+        val encoder = mEncoder ?: return
+        val stream = mOutputStream ?: return
+        encoder.encodePcm(mMixedBuffer.array(), size, stream)
     }
 
     suspend fun start(outputFile: File) = withContext(Dispatchers.IO) {
         initDownlink()
         initUplink()
-        initCodec()
+        initEncoder()
 
         mOutputStream = FileOutputStream(outputFile)
         RecordingPathUtil.setFilePermissions(outputFile)
@@ -218,8 +156,8 @@ class VoipRecorder(private val mContext: Context) {
         mUplinkRecord?.let { it.stop(); it.release() }
         mUplinkRecord = null
 
-        mCodec?.let { it.stop(); it.release() }
-        mCodec = null
+        mEncoder?.release(mOutputStream)
+        mEncoder = null
 
         mOutputStream?.close()
         mOutputStream = null
