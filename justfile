@@ -20,6 +20,7 @@ package variant="release": (build variant)
     set -euo pipefail
     STAGING="build/module-staging"
     rm -rf "$STAGING" build/friston3-module.zip
+    mkdir -p build
     cp -r module "$STAGING"
     mkdir -p "$STAGING/bin"
     cp audioserver-patch/target/{{ TARGET }}/{{ variant }}/audioserver-patch "$STAGING/bin/"
