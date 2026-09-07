@@ -1,5 +1,11 @@
 # Friston-3
 
+![Friston-3 — Preserve the voices.](artwork/friston-3-banner.png)[^artwork]
+
+*After the long vigil, a quieter duty remains: to keep the voices that time would otherwise carry away.*
+
+## About
+
 A Magisk module that enables automatic VoIP and cellular call recording on Android, by leveraging hidden audio APIs and runtime audioserver patching.
 
 ## How It Works
@@ -74,3 +80,5 @@ Once installed, everything is automatic -- no user interaction required. VoIP an
 - [x] Cellular call recording
 - [ ] Microphone recording support
 - [ ] Automatic cloud backup
+
+[^artwork]: The source artwork is copyrighted by Hypergryph (鹰角网络). This banner is an AI-assisted derivative artwork.
