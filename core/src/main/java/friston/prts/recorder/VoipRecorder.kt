@@ -78,13 +78,18 @@ class VoipRecorder(private val mContext: Context) {
         var bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT)
         bufferSize = maxOf(bufferSize, FRAME_BYTES * 4)
 
-        mUplinkRecord = AudioRecord(
-            MediaRecorder.AudioSource.VOICE_COMMUNICATION,
-            SAMPLE_RATE,
-            CHANNEL_CONFIG,
-            AUDIO_FORMAT,
-            bufferSize
-        )
+        mUplinkRecord = AudioRecord.Builder()
+            .setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION)
+            .setAudioFormat(
+                AudioFormat.Builder()
+                    .setSampleRate(SAMPLE_RATE)
+                    .setChannelMask(CHANNEL_CONFIG)
+                    .setEncoding(AUDIO_FORMAT)
+                    .build()
+            )
+            .setBufferSizeInBytes(bufferSize)
+            .setPrivacySensitive(false)
+            .build()
     }
 
     private fun mixFrames(downBuf: ByteArray, downLen: Int, upBuf: ByteArray, upLen: Int): Int {

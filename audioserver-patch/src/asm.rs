@@ -86,8 +86,6 @@ pub fn shellcode(shellcode_addr: u64, return_addr: u64, backup: &[u8]) -> anyhow
         // }
         ; ldr xtm, [x1]  // https://itanium-cxx-abi.github.io/cxx-abi/abi.html#non-trivial-parameters
         ; ldr wtm, [xtm, #0x12c]  // load uid from: 0x12c offset + 0x8 vptr + 0x4 pid
-        // ; cmp wtm, #1000
-        // ; b.gt >skip
         ; cbnz wtm, >skip
         ; cmp x2, #0
         ; cinc x2, x2, eq

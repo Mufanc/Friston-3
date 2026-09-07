@@ -13,7 +13,8 @@ use r3solvr::{BasicResolver, Query, SymbolResolver};
 use std::collections::HashSet;
 use std::fs;
 use std::fs::{File, OpenOptions};
-use std::io::{Read as _, Seek, SeekFrom, Write as _};
+use std::io::{Read, Seek, SeekFrom};
+use std::os::unix::fs::FileExt;
 use std::sync::LazyLock;
 
 static PAGE_SIZE: LazyLock<u64> =
@@ -34,13 +35,11 @@ fn read_mem(pid: pid_t, addr: u64, buffer: &mut [u8]) -> anyhow::Result<()> {
 }
 
 fn write_mem(pid: pid_t, addr: u64, data: &[u8]) -> anyhow::Result<()> {
-    let mut file = OpenOptions::new()
+    let file = OpenOptions::new()
         .write(true)
         .open(format!("/proc/{pid}/mem"))?;
 
-    file.seek(SeekFrom::Start(addr))?;
-    file.write_all(data)?;
-
+    file.write_all_at(data, addr)?;
     Ok(())
 }
 
